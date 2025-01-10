@@ -1,0 +1,2 @@
+MATCH_ID = 0
+PLAYER_TEAM = ''
