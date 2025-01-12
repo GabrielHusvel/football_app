@@ -154,23 +154,17 @@ from pydantic import BaseModel
 from typing import Optional
 import pandas as pd
 
-# Iniciar o app FastAPI
 app = FastAPI()
 
 # Modelos para entrada e saída
 class MatchSummaryRequest(BaseModel):
     match_id: int
+    style: str
 
 class PlayerProfileRequest(BaseModel):
     match_id: int
     player_name: str
 
-class PlayerProfileResponse(BaseModel):
-    nome: str
-    passes: int
-    finalizacoes: int
-    desarmes: int
-    minutos_jogados: Optional[int]
 
 # Endpoints
 @app.post("/match_summary")
