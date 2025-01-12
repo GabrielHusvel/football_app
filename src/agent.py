@@ -3,15 +3,8 @@ from langchain.prompts import PromptTemplate
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain import hub
 from typing import List
-# from tools import load_tools
 
 
-    # Example:
-    #     Thought: I need to compare players in the match.
-    #     Action: player_profile
-    #     Action Input: {{"match_id": "12345", "player_name": "Neymar dos Santos Júnior"}}
-    #     Observation: Do I have the match details? If not, I will use the tool to retrieve them.
-    #                  Otherwise, I will proceed with the analysis.
 
 from tools.football import get_match_details, get_specialist_comments, match_lineup_events
 def load_agent() -> AgentExecutor:
@@ -86,7 +79,7 @@ def load_agent() -> AgentExecutor:
                         "tools"],
        template=football_prompt
     )
-    # tools = load_tools()
+    
     tools = [
         get_match_details,
         get_specialist_comments,

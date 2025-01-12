@@ -69,8 +69,8 @@ def summarize_events(events, match_details, style):
     Returns:
         str: Resumo textual da partida.
     """
-    # Reduzir a quantidade de eventos para no máximo 5 eventos mais importantes
-    reduced_events = events[:5] if len(events) > 5 else events
+    
+    reduced_events = events[:100] if len(events) > 100 else events
 
     # Reformular o prompt para ser mais sucinto
     prompt = (
@@ -115,19 +115,19 @@ def player_profile(match_id, player_name):
     stats = {
         "name": player_name,
         "passes_completed": player_events[(player_events['type'] == 'Pass') & (player_events['pass_outcome'].isna())].shape[0],
-        # "passes": len(player_events[player_events['type'] == 'Pass']),
         "finalizations": len(player_events[player_events['type'] == 'Shot']),
         "shots_on_target": player_events[(player_events['type'] == 'Shot') & (player_events['shot_outcome'] == 'On Target')].shape[0],
-        "disarms": len(player_events[player_events['type'] == 'Duel']),
         "minutes_played": player_events['minute'].max() - player_events['minute'].min(),
         "assisted_goals": player_events['pass_goal_assist'].sum() if 'pass_goal_assist' in player_events else 0,
+        "head_cuts": player_events['clearance_head'].sum() if 'clearance_head' in player_events else 0,
+        "cards": player_events['foul_committed_card'].count() if 'foul_committed_card' in player_events else 0,
+        # "disarms": len(player_events[player_events['type'] == 'Duel']),   
+        # "duels_won": len(player_events[player_events['duel_outcome'] == 'Won']) if 'duel_outcome' in player_events else 0,
+        # "passes": len(player_events[player_events['type'] == 'Pass']),       
         # "chances_created": player_events['pass_shot_assist'].sum() if 'pass_shot_assist' in player_events else 0,
         # "xG": player_events['shot_statsbomb_xg'].sum() if 'shot_statsbomb_xg' in player_events else 0,
-        "duels_won": len(player_events[player_events['duel_outcome'] == 'Won']) if 'duel_outcome' in player_events else 0,
-        "head_cuts": player_events['clearance_head'].sum() if 'clearance_head' in player_events else 0,
         # "left_foot_cuts": player_events['clearance_left_foot'].sum() if 'clearance_left_foot' in player_events else 0,
         # "courts_foot_right": player_events['clearance_right_foot'].sum() if 'clearance_right_foot' in player_events else 0,
-        "cards": player_events['foul_committed_card'].count() if 'foul_committed_card' in player_events else 0,
         # "dribbling_success": len(player_events[player_events['dribble_outcome'] == 'Complete']) if 'dribble_outcome' in player_events else 0,
         # "under_pressure": len(player_events[player_events['under_pressure'] == True]) if 'under_pressure' in player_events else 0,
         # "fouls_committed": player_events[player_events['type'] == 'Foul Committed'].shape[0],
@@ -142,52 +142,77 @@ def player_profile(match_id, player_name):
 
 
 
+
 # 5 - Desenvolvimento de uma API com FastAPI:
 # Crie os seguintes endpoints:
 # /match_summary: Retorna a sumarização de uma partida.
 # /player_profile: Retorna o perfil detalhado de um jogador.
 # Utilize Pydantic para validar as entradas e saídas.
 
+# from fastapi import FastAPI, HTTPException
+# from pydantic import BaseModel
+# app = FastAPI()
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import Optional
-import pandas as pd
+# # Pydantic Models
+# class MatchSummaryRequest(BaseModel):
+#     match_id: int
+#     style: str
 
-app = FastAPI()
+# class MatchSummaryResponse(BaseModel):
+#     summary: str
 
-# Modelos para entrada e saída
-class MatchSummaryRequest(BaseModel):
-    match_id: int
-    style: str
+# class PlayerProfileRequest(BaseModel):
+#     match_id: int
+#     player_name: str
 
-class PlayerProfileRequest(BaseModel):
-    match_id: int
-    player_name: str
+# class PlayerProfileResponse(BaseModel):
+#     name: str
+#     passes_completed: int
+#     finalizations: int
+#     shots_on_target: int
+#     disarms: int
+#     minutes_played: int
+#     assisted_goals: int
+#     duels_won: int
+#     head_cuts: int
+#     cards: int
 
 
-# Endpoints
-@app.post("/match_summary")
-def match_summary(request: MatchSummaryRequest):
-    try:
-        # Obter dados do StatsBomb
-        events = sb.events(match_id=request.match_id)
-        goals = events[events['type'] == 'Shot'][events['shot_outcome'] == 'Goal']
-        summary = {
-            "total_gols": len(goals),
-            "equipes": events['team'].unique().tolist(),
-        }
-        return summary
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# # Endpoint para resumir a partida
+# @app.post("/match_summary", response_model=MatchSummaryResponse)
+# async def match_summary(request: MatchSummaryRequest):
+#     match_id = request.match_id
+#     style = request.style
+    
+#     match_details =  (match_id)
+#     if not match_details:
+#         raise HTTPException(status_code=404, detail="Match not found")
+    
+#     events = get_events(match_id)
+#     reduced_events = events[:5] if len(events) > 5 else events
 
-@app.post("/player_profile", response_model=PlayerProfileResponse)
-def get_player_profile(request: PlayerProfileRequest):
-    try:
-        stats = player_profile(request.match_id, request.player_name)
-        return stats
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+#     prompt = (
+#         f"Resumo dos eventos principais da partida entre {match_details['home_team']} e {match_details['away_team']}:\n"
+#         f"Eventos: {reduced_events}.\n"
+#         f"Descreva o resultado em um texto claro e amigável usando o estilo de narrativa {style}."
+#     )
+
+#     # Simulação do uso de modelo de linguagem
+#     summary = summarize_events()
+
+#     return MatchSummaryResponse(summary=summary)
+
+# # Endpoint para perfil do jogador
+# @app.post("/player_profile", response_model=PlayerProfileResponse)
+# async def player_profile_api(request: PlayerProfileRequest):
+#     match_id = request.match_id
+#     player_name = request.player_name
+
+#     # Obter eventos da partida
+#     stats = player_profile(match_id, player_name)
+    
+
+#     return PlayerProfileResponse(**stats)
 
 
 
@@ -227,7 +252,7 @@ def narrate_match(match_id, match_details):
 # Mostrar os resultados de forma visual e amigável.
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 from langchain.memory import ConversationBufferMemory
-from data_footbal.macth_competition import get_competitions, get_matches, get_lineups, get_events
+from data_football.macth_competition import get_competitions, get_matches, get_lineups, get_events
 
 st.set_page_config(layout="wide",
                    page_title="Football Match Resumed App",
@@ -309,6 +334,8 @@ if selected_season:
             None
         ) 
         match_id = match_details['match_id']
+        st.write("Match ID", match_id)
+        config.MATCH_DETAILS = match_details
         config.MATCH_ID = match_id
         
 # Eventos e Resumo
@@ -352,20 +379,19 @@ with st.container():
     plot_stats(player1_stats, player2_stats, player1, player2)
     
 
+                
     data_match = []
     for player in team['player_name']:
         data_match.append(player_profile(match_id, player))
     df_events = pd.DataFrame(data_match)
-    df_events.to_csv('src/tools/data_football.csv', index=False)        
-    # st.write(data_match)
-    
+    df_events.to_csv('src/tools/football_data.csv', index=False)  
+
 
 # 8 - Criação de um Agente ReAct com LangChain:
 # Configure um agente utilizando LangChain para interagir com os dados da partida.
 # Implemente ferramentas para realizar:
 # Consulta de eventos específicos da partida.
-# Geração de comparações entre dois jogadores.
-# Habilite o agente a responder perguntas como:
+# Geração de comparações entre dois jogadores. 
 # "Quem deu mais passes na partida?"
 # "Qual jogador teve mais finalizações no primeiro tempo?"
 

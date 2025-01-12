@@ -3,7 +3,6 @@ from langchain.chains import LLMChain
 from langchain_google_genai import GoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
-
 from typing import Dict, List
 import json
 import pandas as pd
@@ -11,13 +10,9 @@ import numpy as np
 from statsbombpy import sb
 import os
 import yaml
-
-
-from data_footbal.macth_competition import get_lineups, get_matches, get_events, get_player_stats
+from data_football.macth_competition import get_lineups, get_matches, get_events, get_player_stats
 import json
 import yaml
-
-
 from statsbombpy import sb
 import pandas as pd
 
@@ -32,19 +27,20 @@ def player_profile(match_id, player_name):
     stats = {
         "name": player_name,
         "passes_completed": player_events[(player_events['type'] == 'Pass') & (player_events['pass_outcome'].isna())].shape[0],
-        # "passes": len(player_events[player_events['type'] == 'Pass']),
         "finalizations": len(player_events[player_events['type'] == 'Shot']),
         "shots_on_target": player_events[(player_events['type'] == 'Shot') & (player_events['shot_outcome'] == 'On Target')].shape[0],
-        "disarms": len(player_events[player_events['type'] == 'Duel']),
         "minutes_played": player_events['minute'].max() - player_events['minute'].min(),
         "assisted_goals": player_events['pass_goal_assist'].sum() if 'pass_goal_assist' in player_events else 0,
+        "head_cuts": player_events['clearance_head'].sum() if 'clearance_head' in player_events else 0,
+        "cards": player_events['foul_committed_card'].count() if 'foul_committed_card' in player_events else 0,
+ 
+        # "disarms": len(player_events[player_events['type'] == 'Duel']),
+        # "duels_won": len(player_events[player_events['duel_outcome'] == 'Won']) if 'duel_outcome' in player_events else 0,
+        # "passes": len(player_events[player_events['type'] == 'Pass']),       
         # "chances_created": player_events['pass_shot_assist'].sum() if 'pass_shot_assist' in player_events else 0,
         # "xG": player_events['shot_statsbomb_xg'].sum() if 'shot_statsbomb_xg' in player_events else 0,
-        "duels_won": len(player_events[player_events['duel_outcome'] == 'Won']) if 'duel_outcome' in player_events else 0,
-        "head_cuts": player_events['clearance_head'].sum() if 'clearance_head' in player_events else 0,
         # "left_foot_cuts": player_events['clearance_left_foot'].sum() if 'clearance_left_foot' in player_events else 0,
         # "courts_foot_right": player_events['clearance_right_foot'].sum() if 'clearance_right_foot' in player_events else 0,
-        "cards": player_events['foul_committed_card'].count() if 'foul_committed_card' in player_events else 0,
         # "dribbling_success": len(player_events[player_events['dribble_outcome'] == 'Complete']) if 'dribble_outcome' in player_events else 0,
         # "under_pressure": len(player_events[player_events['under_pressure'] == True]) if 'under_pressure' in player_events else 0,
         # "fouls_committed": player_events[player_events['type'] == 'Foul Committed'].shape[0],
@@ -231,7 +227,7 @@ def match_lineup_events():
     Gets match data in pandas dataframe format.
     Query the event data in the dataframe to respond correctly.
     """
-    df = pd.read_csv('src/tools/data_football.csv', sep=',')
+    df = pd.read_csv('src/tools/football_data.csv', sep=',')
 
     
     return df
